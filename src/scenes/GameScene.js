@@ -6,6 +6,8 @@ import spr_dude from '../assets/dude.png';
 
 import Player from '../sprites/Player';
 import Platforms from '../sprites/Platforms';
+import Stars from '../sprites/Stars';
+import Bombs from '../sprites/Bombs';
 
 class GameScene extends Phaser.Scene {
   constructor() {
@@ -29,27 +31,6 @@ class GameScene extends Phaser.Scene {
 
   create() {
     this.initContruction();
-
-    this.player = new Player({
-      scene: this,
-      key: 'dude',
-      x: 100,
-      y: 450,
-    });
-
-    // this.platforms = new Platforms({
-    //   scene: this,
-    //   key: 'ground',
-    //   x: 100,
-    //   y: 450,
-    // });
-
-    this.player.create();
-    // this.platforms.create();
-
-    this.setAnimations();
-
-    // essas 2 ficam aqui :)
     this.setColliders();
     this.setOverlappers();
 
@@ -71,7 +52,6 @@ class GameScene extends Phaser.Scene {
   initContruction() {
     // Scenario bg
     this.add.image(0, 0, 'sky').setOrigin(0, 0);
-    this.add.image(0, 0, 'star').setOrigin(0, 0);
 
     // Score
     this.scoreText = this.add.text(16, 16, 'score: 0', {
@@ -79,43 +59,41 @@ class GameScene extends Phaser.Scene {
       fill: '#000',
     });
 
-    this.platforms = this.physics.add.staticGroup();
+    // Sprites
+    this.player = new Player({
+      scene: this,
+      key: 'dude',
+      x: 100,
+      y: 450,
+    });
 
-    this.platforms
-      .create(400, 568, 'ground')
-      .setScale(2)
-      .refreshBody();
+    this.platforms = new Platforms({
+      scene: this,
+      key: 'ground',
+    });
 
-    this.platforms.create(600, 400, 'ground');
-    this.platforms.create(50, 250, 'ground');
-    this.platforms.create(750, 220, 'ground');
-
-    // Stars
-    this.stars = this.physics.add.group({
+    this.stars = new Stars({
+      scene: this,
       key: 'star',
-      repeat: 11,
-      setXY: { x: 12, y: 0, stepX: 70 },
     });
 
-    // Bombs group
-    this.bombs = this.physics.add.group();
-  }
-
-  setAnimations() {
-    // Stars animation
-    this.stars.children.iterate(function(child) {
-      child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
+    this.bombs = new Bombs({
+      scene: this,
+      key: 'bomb',
     });
+
+    this.platformsGroup = this.platforms.getGroup();
+    this.starsGroup = this.stars.getGroup();
+    this.bombsGroup = this.bombs.getGroup();
   }
 
   setColliders() {
-    // Colliders
-    this.physics.add.collider(this.player, this.platforms);
-    this.physics.add.collider(this.stars, this.platforms);
-    this.physics.add.collider(this.bombs, this.platforms);
+    this.physics.add.collider(this.player, this.platformsGroup);
+    this.physics.add.collider(this.starsGroup, this.platformsGroup);
+    this.physics.add.collider(this.bombsGroup, this.platformsGroup);
     this.physics.add.collider(
       this.player,
-      this.bombs,
+      this.bombsGroup,
       this.hitBomb,
       null,
       this,
@@ -123,10 +101,9 @@ class GameScene extends Phaser.Scene {
   }
 
   setOverlappers() {
-    // Overlappers
     this.physics.add.overlap(
       this.player,
-      this.stars,
+      this.starsGroup,
       this.collectStar,
       null,
       this,
@@ -140,8 +117,8 @@ class GameScene extends Phaser.Scene {
     this.score += 10;
     this.scoreText.setText('Score: ' + this.score);
 
-    if (this.stars.countActive(true) === 0) {
-      this.stars.children.iterate(function(child) {
+    if (this.starsGroup.countActive(true) === 0) {
+      this.starsGroup.children.iterate(function(child) {
         child.enableBody(true, child.x, 0, true, true);
       });
 
@@ -150,7 +127,7 @@ class GameScene extends Phaser.Scene {
           ? Phaser.Math.Between(400, 800)
           : Phaser.Math.Between(0, 400);
 
-      let bomb = this.bombs.create(x, 16, 'bomb');
+      let bomb = this.bombsGroup.create(x, 16, 'bomb');
 
       bomb.setBounce(1);
       bomb.setCollideWorldBounds(true);
@@ -165,7 +142,7 @@ class GameScene extends Phaser.Scene {
 
     this.player.anims.play('turn');
 
-    gameOver = true;
+    this.scene.restart();
   }
 }
 
