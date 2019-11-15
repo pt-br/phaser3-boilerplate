@@ -6,6 +6,7 @@ import spr_star from '../assets/star.png';
 import spr_ground from '../assets/platform.png';
 import spr_bomb from '../assets/bomb.png';
 import spr_dude from '../assets/dude.png';
+import Player from '../sprites/Player';
 
 class GameScene extends Phaser.Scene {
   constructor() {
@@ -28,6 +29,33 @@ class GameScene extends Phaser.Scene {
   }
 
   create() {
+    this.initContruction();
+    this.setProperties();
+    this.setAnimations();
+    this.setColliders();
+    this.setOverlappers();
+
+    // this.player = new Player({ FOR FUTURE REFERENCE
+    //   scene: this,
+    //   x: 100,
+    //   y: 450,
+    //   key: 'player',
+    // });
+
+    // // Set bounds for current room
+    // this.player.setRoomBounds(this.rooms);
+
+    // // The camera should follow Mario
+    // this.cameras.main.startFollow(this.player);
+
+    // this.cameras.main.roundPixels = true;
+  }
+
+  update() {
+    this.setControllers();
+  }
+
+  initContruction() {
     // Scenario bg
     this.add.image(0, 0, 'sky').setOrigin(0, 0);
     this.add.image(0, 0, 'star').setOrigin(0, 0);
@@ -38,7 +66,6 @@ class GameScene extends Phaser.Scene {
       fill: '#000',
     });
 
-    // Scenario static units
     this.platforms = this.physics.add.staticGroup();
 
     this.platforms
@@ -52,10 +79,25 @@ class GameScene extends Phaser.Scene {
 
     // Player
     this.player = this.physics.add.sprite(100, 450, 'dude');
+
+    // Stars
+    this.stars = this.physics.add.group({
+      key: 'star',
+      repeat: 11,
+      setXY: { x: 12, y: 0, stepX: 70 },
+    });
+
+    // Bombs group
+    this.bombs = this.physics.add.group();
+  }
+
+  setProperties() {
     this.player.setBounce(0.2);
     this.player.setCollideWorldBounds(true);
     this.player.body.setGravityY(300);
+  }
 
+  setAnimations() {
     // Player animation
     this.anims.create({
       key: 'left',
@@ -77,20 +119,13 @@ class GameScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    // Stars
-    this.stars = this.physics.add.group({
-      key: 'star',
-      repeat: 11,
-      setXY: { x: 12, y: 0, stepX: 70 },
-    });
-
+    // Stars animation
     this.stars.children.iterate(function(child) {
       child.setBounceY(Phaser.Math.FloatBetween(0.4, 0.8));
     });
+  }
 
-    // Bombs group
-    this.bombs = this.physics.add.group();
-
+  setColliders() {
     // Colliders
     this.physics.add.collider(this.player, this.platforms);
     this.physics.add.collider(this.stars, this.platforms);
@@ -102,7 +137,9 @@ class GameScene extends Phaser.Scene {
       null,
       this,
     );
+  }
 
+  setOverlappers() {
     // Overlappers
     this.physics.add.overlap(
       this.player,
@@ -111,24 +148,9 @@ class GameScene extends Phaser.Scene {
       null,
       this,
     );
-
-    // this.player = new Player({ FOR FUTURE REFERENCE
-    //   scene: this,
-    //   x: 100,
-    //   y: 450,
-    //   key: 'player',
-    // });
-
-    // // Set bounds for current room
-    // this.player.setRoomBounds(this.rooms);
-
-    // // The camera should follow Mario
-    // this.cameras.main.startFollow(this.player);
-
-    // this.cameras.main.roundPixels = true;
   }
 
-  update() {
+  setControllers() {
     // Player controllers
     const cursors = this.input.keyboard.createCursorKeys();
 
